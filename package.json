@@ -1,0 +1,14 @@
+{
+    "name": "server",
+    "description": "CompS381F Project",
+    "author": "Kwan Hoi Ling<s11252128@ouhk.edu.hk>",
+    "version": "0.0.1",
+    "dependencies": {
+        "mongoose": "*",
+		"express" : "*",
+		"ejs" : "*"
+    },
+    "engine": "node >= 0.10.0",
+    "scripts": {"start": "node server"}
+}
+
