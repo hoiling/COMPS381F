@@ -20,7 +20,7 @@
 				</tr>
 				<%for(var i=0; i<restaurant.length; i++) { %>
 				<tr>
-					<td><%= restaurant[i].name %></td>
+					<td><a href="/editRestaurant?id=<%= restaurant[i]._id %>"><%= restaurant[i].name %></a></td>
 					<td><%= restaurant[i].borough %></td>
 					<td><%= restaurant[i].cuisine %></td>
 					<td><%= restaurant[i].restaurant_id %></td>
@@ -33,7 +33,9 @@
 				<% } %>				
 			</table>
 			<br><br>
-			<Center><input type='submit' value='Delete'></Center>
+			<% if(restaurant.length > 0) { %>
+				<Center><input type='submit' value='Delete'></Center>
+			<% } %>
 		</form>
 		<Center><a href="/">Go Home</a></Center>
 	</body>

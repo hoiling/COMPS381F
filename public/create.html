@@ -3,12 +3,12 @@
 		<title>Restaurant Registration</title>
 	</head>
 	<body>
-		<H1><Center>Restaurant Registration</Center></H1>
-		<form action="createRestaurant" method="post" align="center">
+		<H1>Restaurant Registration</H1>
+		<form action="createRestaurant" method="post">
 			<H2>Name of Restaurant</H2>
 			<input type='text' name='name'>
 			<H2>Address</H2>
-				<table align="center">
+				<table>
 					<tr>
 						<td>Building:</td> 
 						<td><input type='text' name='building'></td>
@@ -23,7 +23,7 @@
 					</tr>
 			</table>
 			<H2>Corrdinates</H2>
-			<table align="center">
+			<table>
 					<tr>
 						<td>Longitude:</td> 
 						<td><input type='text' name='lon'></td>
@@ -34,7 +34,7 @@
 					</tr>
 			</table>
 			<H2>Other Info</H2>
-			<table align="center">
+			<table>
 					<tr>
 						<td>Borough:</td> 
 						<td><input type='text' name='borough'></td>
@@ -48,6 +48,7 @@
 						<td><input type='text' name='id'></td>
 					</tr>
 			</table>
+			<br>
 			<input type='submit' value='Create'><br><br>
 			<b><a href="/">Go home</a></b>
 		</form>

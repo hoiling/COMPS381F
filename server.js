@@ -16,24 +16,15 @@ app.get('/create', function(req, res) {
 	res.sendFile(__dirname + '/public/create.html');
 });
 
-app.get('/delete', function(req, res) {
-	res.sendFile(__dirname + '/public/delete.html');
-});
-
 app.get('/display', function(req, res) {
 	res.sendFile(__dirname + '/public/display.html');
 });
-
-app.get('/update', function(req, res) {
-	res.sendFile(__dirname + '/public/update.html');
-});
-
 
 // done
 app.post('/createRestaurant', function(req, res) {	
 	mongoose.connect(mongodbURL);
 	var db = mongoose.connection;
-	db.open('error', console.error.bind(console, "Connect ERROR: " ));
+	db.open('error', console.error.bind(console, "Connection ERROR: " ));
 	db.once('open', function(callback) { // open once
 		// use model
 		var Restaurant = mongoose.model('restaurant', RestaurantSchema);
@@ -124,7 +115,9 @@ app.get('/removeRestaurant', function(req, res) {
 					}
 				});
 			}
+			res.writeHead(200, {"Content-Type": "text/html"});
 			res.write("<html><body><h1>Remove done!</h1>");
+			res.end();
 		}
 		else if (req.query.id) {  // single checkbox select
 			var target = {_id: ""};
@@ -139,9 +132,12 @@ app.get('/removeRestaurant', function(req, res) {
 					db.close();
 				}
 			});
+			res.writeHead(200, {"Content-Type": "text/html"});
 			res.write("<html><body><h1>Remove done!</h1>");
+			res.end();
 		}
 		else { // nothing has selected
+			console.log("None selected!");
 			res.write("<html><body><h1>None selected!</h1>");
 			db.close();
 		}
@@ -151,15 +147,42 @@ app.get('/removeRestaurant', function(req, res) {
 	
 }); // delete
 
+
+app.get('/editRestaurant', function(req, res) {
+	mongoose.connect(mongodbURL);
+	var db = mongoose.connection;
+	db.on('error', console.error.bind(console, "Connection ERROR: "));
+	db.once('open', function (callback) {
+		var Restaurant = mongoose.model('restaurant', RestaurantSchema);
+		var target = {_id: ""};
+		target._id = req.query.id;
+		Restaurant.findOne(target, function(err,results) {
+			if (err) {
+				console.log("Error: " + err.message);
+				res.write(err.message);
+			}
+			else {
+				db.close();
+				console.log(results);
+				res.render('editRestaurant',{restaurant: results});
+			}
+			res.end();
+		});
+	});
+}); // editRestaurant
+
+app.get('/updateRestaurant', function(req, res) {
+	console.log(req.query);
+});
+
 app.get('/displayRestaurant', function(req, res) {
 	mongoose.connect(mongodbURL);
 	var db = mongoose.connection;
-	db.open('error', console.error.bind(console, "Connect ERROR: " ));
+	db.open('error', console.error.bind(console, "Connection ERROR: " ));
 	db.once('open', function(callback) {
 		var Restaurant = mongoose.model('restaurant', RestaurantSchema);
 		var criteria = {};
-		
-		console.log(criteria);
+
 		console.log(req.query);
 		
 		//Address these will copy the front

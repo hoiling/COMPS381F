@@ -3,14 +3,14 @@
 		<title>Search Restaurant</title>
 	</head>
 	<body>
-		<form action="displayRestaurant" method="get" align="center">
+		<form action="displayRestaurant" method="get">
 			<H2>Name of Restaurant</H2>
 			<input type='text' name='name'>
 			<H2>Address</H2>
-				<table align="center">
+				<table>
 					<tr>
 						<td>Building:</td> 
-						<td><input type='text' name='building'></td>
+						<td><input type='text' name='abuilding'></td>
 					</tr>
 					<tr>
 						<td>Street:</td>
@@ -22,7 +22,7 @@
 					</tr>
 			</table>
 			<H2>Corrdinates</H2>
-			<table align="center">
+			<table>
 					<tr>
 						<td>Longitude:</td> 
 						<td><input type='text' name='lon'></td>
@@ -33,7 +33,7 @@
 					</tr>
 			</table>
 			<H2>Other Info</H2>
-			<table align="center">
+			<table>
 					<tr>
 						<td>Borough:</td> 
 						<td><input type='text' name='borough'></td>
@@ -47,6 +47,7 @@
 						<td><input type='text' name='id'></td>
 					</tr>
 			</table>
+			<br>
 			<input type='submit' value='Submit'><br><br>
 			<b><a href="/">Go home</a></b>
 		</form>
