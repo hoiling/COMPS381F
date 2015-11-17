@@ -5,38 +5,10 @@
 	<body>
 		<H2 align="center">Matching Documents = <%= restaurant.length %></H2>
 		<br>
-		<form action="removeRestaurant" method="delete">
-			<table border="1" cellpadding="5" cellspacing="5" align="center">
-				<tr>
-					<td>Name</td>
-					<td>Borough</td>
-					<td>Cuisine</td>
-					<td>Restaurand Id</td>
-					<td>Building</td>
-					<td>Street</td>
-					<td>Zipcode</td>
-					<td>Coordinates</td>
-					<td>Delete</td>
-				</tr>
-				<%for(var i=0; i<restaurant.length; i++) { %>
-				<tr>
-					<td><a href="/editRestaurant?id=<%= restaurant[i]._id %>"><%= restaurant[i].name %></a></td>
-					<td><%= restaurant[i].borough %></td>
-					<td><%= restaurant[i].cuisine %></td>
-					<td><%= restaurant[i].restaurant_id %></td>
-					<td><%= restaurant[i].address.building %></td>
-					<td><%= restaurant[i].address.street %></td>
-					<td><%= restaurant[i].address.zipcode %></td>
-					<td><%= restaurant[i].address.coord[0]+ ", " + restaurant[i].address.coord[1] %></td>
-					<td><input type="checkbox" name="id" value="<%=restaurant[i]._id %>"></td>
-				</tr>
-				<% } %>				
-			</table>
-			<br><br>
-			<% if(restaurant.length > 0) { %>
-				<Center><input type='submit' value='Delete'></Center>
-			<% } %>
-		</form>
+		<%for(var i=0; i<restaurant.length; i++) { %>
+			<%= (i+1) + ". " + restaurant[i]%>
+			<p>
+		<% } %>	
 		<Center><a href="/">Go Home</a></Center>
 	</body>
 </html>

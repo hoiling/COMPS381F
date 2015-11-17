@@ -37,7 +37,6 @@ app.post('/createRestaurant', function(req, res) {
 			data += chunk;
 		}); // end req.on()
 		req.on('end', function() {
-			// parse query string such as id=1080&name=raymond
 			console.log("POST Data: " + data);
 			var FirstSplit = data.split('&');
 			for (var i = 0; i < FirstSplit.length; i++) {
@@ -90,14 +89,15 @@ app.post('/createRestaurant', function(req, res) {
 	});	
 }); // post /createRestaurant
 
-// done
-app.get('/removeRestaurant', function(req, res) {
-	console.log(req.query);
+
+// done but have error
+app.get('/removeRestaurant', function(req,res) {
+	//console.log("/deleteKitty: " + JSON.stringify(req.query.id));
 	mongoose.connect(mongodbURL);
 	var db = mongoose.connection;
-	db.on('error', console.error.bind(console, 'Connect ERROR: '));
+	db.on('error', console.error.bind(console, "Connection ERROR: "));
 	db.once('open', function (callback) {
-		var Restaurant = mongoose.model('restaurant', RestaurantSchema);
+		var Restaurant= mongoose.model('restaurant', RestaurantSchema);
 		if (Array.isArray(req.query.id)) { //multiple checkbox select
 			// req.query.id is an array
 			for (var i=0; i<req.query.id.length; i++) {
@@ -110,14 +110,13 @@ app.get('/removeRestaurant', function(req, res) {
 						res.write(err.message);
 					}
 					else {
-						console.log("Removed: " + target._id);		
-						db.close();
+						console.log("Removed: " + target._id);
+						
 					}
 				});
 			}
-			res.writeHead(200, {"Content-Type": "text/html"});
 			res.write("<html><body><h1>Remove done!</h1>");
-			res.end();
+			db.close();
 		}
 		else if (req.query.id) {  // single checkbox select
 			var target = {_id: ""};
@@ -129,24 +128,19 @@ app.get('/removeRestaurant', function(req, res) {
 				}
 				else {
 					console.log("Deleted: " + target._id);		
-					db.close();
 				}
 			});
-			res.writeHead(200, {"Content-Type": "text/html"});
 			res.write("<html><body><h1>Remove done!</h1>");
-			res.end();
+			db.close();
 		}
 		else { // nothing has selected
-			console.log("None selected!");
-			res.write("<html><body><h1>None selected!</h1>");
+			res.write("<html><body><h1>None selected!</h1>");			
 			db.close();
 		}
 		res.write('<br><a href="/">Go Home</a></body></html>');
 		res.end();
 	});
-	
-}); // delete
-
+});
 
 app.get('/editRestaurant', function(req, res) {
 	mongoose.connect(mongodbURL);
@@ -173,6 +167,7 @@ app.get('/editRestaurant', function(req, res) {
 
 app.get('/updateRestaurant', function(req, res) {
 	console.log(req.query);
+
 });
 
 app.get('/displayRestaurant', function(req, res) {
@@ -198,6 +193,8 @@ app.get('/displayRestaurant', function(req, res) {
 			criteria = {"address.coord": req.query.lat};
 		if(req.query.lon && req.query.lat)
 			criteria = {"address.coord": [req.query.lon, req.query.lat]};		
+		
+		// not problem
 		//Borough
 		if(req.query.borough)
 			criteria.borough = req.query.borough;
@@ -209,7 +206,7 @@ app.get('/displayRestaurant', function(req, res) {
 			criteria.restaurant_id = req.query.restaurant_id;
 		//Name
 		if(req.query.name)
-			criteria.name = req.query.name;		
+			criteria.name = req.query.name;			
 		
 		console.log(criteria);
 	
@@ -220,7 +217,7 @@ app.get('/displayRestaurant', function(req, res) {
 			}
 			else {
 				console.log("FOUND RESULT:" + results.length);
-				if(results) {
+				if(results) {			
 					res.render('displayResult', {restaurant: results});
 					res.end();
 				}				
