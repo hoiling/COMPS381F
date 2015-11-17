@@ -24,7 +24,7 @@ app.get('/display', function(req, res) {
 app.post('/createRestaurant', function(req, res) {	
 	mongoose.connect(mongodbURL);
 	var db = mongoose.connection;
-	db.open('error', console.error.bind(console, "Connection ERROR: " ));
+	db.on('error', console.error.bind(console, "Connection ERROR: " ));
 	db.once('open', function(callback) { // open once
 		// use model
 		var Restaurant = mongoose.model('restaurant', RestaurantSchema);
@@ -87,12 +87,11 @@ app.post('/createRestaurant', function(req, res) {
 			}); // newRestaurant save	
 		}); // end req.on()				
 	});	
-}); // post /createRestaurant
+}); // createRestaurant
 
 
-// done but have error
+// work but have error
 app.get('/removeRestaurant', function(req,res) {
-	//console.log("/deleteKitty: " + JSON.stringify(req.query.id));
 	mongoose.connect(mongodbURL);
 	var db = mongoose.connection;
 	db.on('error', console.error.bind(console, "Connection ERROR: "));
@@ -104,7 +103,7 @@ app.get('/removeRestaurant', function(req,res) {
 				var target = {_id: ""};
 				target._id = req.query.id[i];
 				console.log("Removing " + target._id + "...");
-				Restaurant.find(target).remove(function(err) {
+				Restaurant.remove(target, function(err) {
 					if (err) {
 						console.log("Error: " + err.message);
 						res.write(err.message);
@@ -115,13 +114,16 @@ app.get('/removeRestaurant', function(req,res) {
 					}
 				});
 			}
+			res.writeHead(200, {"Content-Type": "text/html"});
 			res.write("<html><body><h1>Remove done!</h1>");
+			res.write('<br><a href="/">Go Home</a></body></html>');
+			res.end();
 			db.close();
 		}
 		else if (req.query.id) {  // single checkbox select
 			var target = {_id: ""};
 			target._id = req.query.id;
-			Restaurant.find(target).remove(function(err) {
+			Restaurant.remove(target, function(err) {
 				if (err) {
 					console.log("Error: " + err.message);
 					res.write(err.message);
@@ -130,18 +132,24 @@ app.get('/removeRestaurant', function(req,res) {
 					console.log("Deleted: " + target._id);		
 				}
 			});
+			res.writeHead(200, {"Content-Type": "text/html"});
 			res.write("<html><body><h1>Remove done!</h1>");
+			res.write('<br><a href="/">Go Home</a></body></html>');
+			res.end();
 			db.close();
 		}
 		else { // nothing has selected
-			res.write("<html><body><h1>None selected!</h1>");			
+			res.writeHead(400, {"Content-Type": "text/html"});
+			res.write("<html><body><h1>None selected!</h1>");
+			res.write('<br><a href="/">Go Home</a></body></html>');
+			res.end();
 			db.close();
 		}
-		res.write('<br><a href="/">Go Home</a></body></html>');
-		res.end();
+	
 	});
-});
+}); // removeRestaurant
 
+// done
 app.get('/editRestaurant', function(req, res) {
 	mongoose.connect(mongodbURL);
 	var db = mongoose.connection;
@@ -165,22 +173,68 @@ app.get('/editRestaurant', function(req, res) {
 	});
 }); // editRestaurant
 
+//not search _id for update still using the restaurant_id need fix it 
+//cannot show the page to user operation is successd
 app.get('/updateRestaurant', function(req, res) {
-	console.log(req.query);
+	mongoose.connect(mongodbURL);
+	var db = mongoose.connection;
+	db.on('error', console.error.bind(console, 'Connection ERROR: '));
+	db.once('open', function(callback) {
+		var Restaurant = mongoose.model("restaurant", RestaurantSchema);
+		var target = {};
+		target.restaurant_id = req.query.id;
+		console.log(target);
+		Restaurant.findOne(target, function(err, result) {
+			if(err)
+				console.log("Find Document Update Error: " + err.message);
+			else {	
+				result.address.building = req.query.building;
+				result.address.street = req.query.street;
+				result.address.zipcode = req.query.zipcode;
+				result.address.coord = [req.query.lon, req.query.lat];
+				result.name = req.query.name;
+				result.cuisine = req.query.cuisine;
+				result.borough = req.query.borough;
+				result.restaurant_id = req.query.id;
+				
+				console.log(result);	
+				// able to update but can't show the word in webpage and cmd
+				result.save(function(err) {
+					if (err) {
+						console.log("Error: " + err.message);
+						res.writeHead(404, {"Content-Type": "text/html"});
+						res.write('<html><head><title>Update Fail</title></head><body><h1>Update Fail</h1>');
+						res.write('<br><a href="/">Go Home</a></body></html>');
+						res.write(err.message);
+						res.end();
+					}
+					else {
+						console.log('Updated: ', result._id);
+						res.writeHead(200, {"Content-Type": "text/html"});
+						res.write('<html><head><title>Update Success</title></head><body><h1>Update Succeed</h1>');
+						
+					}
+				});
+			}
+		db.close();
+		res.write('<br><a href="/">Go Home</a></body></html>');
+		res.end();
+		});
+	});
+}); // updateRestaurant
 
-});
-
+//if more than one Address object use for searching, the previous one will lost after save another matched Address object 
 app.get('/displayRestaurant', function(req, res) {
 	mongoose.connect(mongodbURL);
 	var db = mongoose.connection;
-	db.open('error', console.error.bind(console, "Connection ERROR: " ));
+	db.on('error', console.error.bind(console, "Connection ERROR: " ));
 	db.once('open', function(callback) {
 		var Restaurant = mongoose.model('restaurant', RestaurantSchema);
 		var criteria = {};
 
 		console.log(req.query);
 		
-		//Address these will copy the front
+		//Address
 		if(req.query.building)
 			criteria = {"address.building": req.query.building};
 		if(req.query.street)
@@ -206,7 +260,7 @@ app.get('/displayRestaurant', function(req, res) {
 			criteria.restaurant_id = req.query.restaurant_id;
 		//Name
 		if(req.query.name)
-			criteria.name = req.query.name;			
+			criteria.name = req.query.name;		
 		
 		console.log(criteria);
 	
@@ -223,9 +277,8 @@ app.get('/displayRestaurant', function(req, res) {
 				}				
 			}
 			db.close();
-		});
-	
+		});	
 	});	
-}); // end of read
+}); // displayRestaurant
 
 app.listen(process.env.PORT||8099);
