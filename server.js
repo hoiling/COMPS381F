@@ -1,5 +1,6 @@
 var express = require('express');
 var app = express();
+var bodyParser = require('body-parser');
 var mongoose = require('mongoose');
 var mongodbURL = 'mongodb://hoiling:123456@ds053894.mongolab.com:53894/comps381f';
 
@@ -7,183 +8,112 @@ var RestaurantSchema = require('./models/restaurant');
 
 app.set('view engine', 'ejs');
 app.use(express.static(__dirname + '/public'));
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
 
-app.get('/', function(req, res) {
-	res.sendFile(__dirname + '/public/index.html');
-});
-
-app.get('/create', function(req, res) {
-	res.sendFile(__dirname + '/public/create.html');
-});
-
-app.get('/display', function(req, res) {
-	res.sendFile(__dirname + '/public/display.html');
-});
-
-// done
-app.post('/createRestaurant', function(req, res) {	
+app.post('/create', function(req, res) {	
 	mongoose.connect(mongodbURL);
 	var db = mongoose.connection;
 	db.on('error', console.error.bind(console, "Connection ERROR: " ));
-	db.once('open', function(callback) { // open once
-		// use model
-		var Restaurant = mongoose.model('restaurant', RestaurantSchema);
-		// create insert format
-		var input = {address: {building: "", street: "", zipcode:"", coord: [],}, 
-							borough: "", cuisine: "", restaurant_id: "", name: ""};
+	db.once('open', function(callback) {
 		
-		var data = '';
-		req.on('data', function(chunk) {
-			data += chunk;
-		}); // end req.on()
-		req.on('end', function() {
-			console.log("POST Data: " + data);
-			var FirstSplit = data.split('&');
-			for (var i = 0; i < FirstSplit.length; i++) {
-				var pair = FirstSplit[i].replace('+', ' '); // replace + to space >> " " when user type space
-				var pair = pair.split('=');
-				if (pair[0] == "building") {
-					input.address.building = pair[1];
-				}
-				if (pair[0] == "street") {
-					input.address.street = pair[1];
-				}
-				if (pair[0] == "zipcode") {
-					input.address.zipcode = pair[1];
-				}
-				if (pair[0] == "lon") {
-					input.address.coord[0] = pair[1];
-				}
-				if (pair[0] == "lat") {
-					input.address.coord[1] = pair[1];
-				}
-				if (pair[0] == "borough") {
-					input.borough = pair[1];
-				}
-				if (pair[0] == "cuisine") {
-					input.cuisine = pair[1];
-				}
-				if (pair[0] == "id") {
-					input.restaurant_id = pair[1];
-				}
-				if (pair[0] == "name") {
-					input.name = pair[1];
-				}
-			}
-			console.log(input);
-			var newRestaurant = new Restaurant(input);
-			newRestaurant.save(function(err) {
-				if(err) 
-					console.log("ERROR: " + err.message);
-				else {
-					console.log("Restaurant is created");
-					res.writeHead(200, {"Content-Type": "text/html"});
-					res.write("<html><head><title>Create Success</title></head>");
-					res.write("<body><H1>Create Successful</H1>");
-					res.write('<a href="/">Go Home</a></body></html>');
-					res.end();				
-				}
-			db.close();
-			}); // newRestaurant save	
-		}); // end req.on()				
-	});	
-}); // createRestaurant
-
-
-// work but have error
-app.get('/removeRestaurant', function(req,res) {
-	mongoose.connect(mongodbURL);
-	var db = mongoose.connection;
-	db.on('error', console.error.bind(console, "Connection ERROR: "));
-	db.once('open', function (callback) {
-		var Restaurant= mongoose.model('restaurant', RestaurantSchema);
-		if (Array.isArray(req.query.id)) { //multiple checkbox select
-			// req.query.id is an array
-			for (var i=0; i<req.query.id.length; i++) {
-				var target = {_id: ""};
-				target._id = req.query.id[i];
-				console.log("Removing " + target._id + "...");
-				Restaurant.remove(target, function(err) {
-					if (err) {
+		console.log('Incoming request: POST');
+		console.log('Request body: ', req.body);
+		
+		var Restaurant = mongoose.model('restaurant', RestaurantSchema);
+		var input = {address: {building: "", street: "", zipcode:"", coord: [],}, 
+							borough: "", cuisine: "", restaurant_id: "", name: "",grades:[]};
+		var inGrade = {};
+		
+		// save data from POST Form
+		input.address.building = req.body.building;
+		input.address.street = req.body.street;
+		input.address.zipcode = req.body.zipcode;
+		input.address.coord[0] = parseFloat(req.body.lon);
+		input.address.coord[1] = parseFloat(req.body.lat);
+		input.borough = req.body.borough;
+		input.cuisine = req.body.cuisine;
+		input.restaurant_id = req.body.restaurant_id;
+		input.name = req.body.name;				
+		
+		if(req.body.date && req.body.grade && req.body.score) {
+			var date = req.body.date.split(',');
+			var grade = req.body.grade.split(',');
+			var score = req.body.score.split(',');
+			
+			if(date.length == grade.length && date.length == score.length) {
+				for (var i = 0; i<date.length; i++) {
+				inGrade.date = date[i];
+				inGrade.grade = grade[i];
+				inGrade.score = parseInt(score[i]);
+				input.grades.push(inGrade);
+				inGrade = {};
+				}				
+			
+				var newRestaurant = new Restaurant(input);
+				newRestaurant.save(function(err) {
+					console.log(input);
+					if(err) {
 						console.log("Error: " + err.message);
-						res.write(err.message);
+						res.status(500).json(err);
 					}
 					else {
-						console.log("Removed: " + target._id);
-						
+						db.close();	
+						console.log("Restaurant is created");
+						res.status(200).json({Message: 'Insert Done', id: input.restaurant_id});						
 					}
-				});
-			}
-			res.writeHead(200, {"Content-Type": "text/html"});
-			res.write("<html><body><h1>Remove done!</h1>");
-			res.write('<br><a href="/">Go Home</a></body></html>');
-			res.end();
-			db.close();
-		}
-		else if (req.query.id) {  // single checkbox select
-			var target = {_id: ""};
-			target._id = req.query.id;
-			Restaurant.remove(target, function(err) {
-				if (err) {
-					console.log("Error: " + err.message);
-					res.write(err.message);
-				}
-				else {
-					console.log("Deleted: " + target._id);		
-				}
-			});
-			res.writeHead(200, {"Content-Type": "text/html"});
-			res.write("<html><body><h1>Remove done!</h1>");
-			res.write('<br><a href="/">Go Home</a></body></html>');
-			res.end();
-			db.close();
-		}
-		else { // nothing has selected
-			res.writeHead(400, {"Content-Type": "text/html"});
-			res.write("<html><body><h1>None selected!</h1>");
-			res.write('<br><a href="/">Go Home</a></body></html>');
-			res.end();
-			db.close();
-		}
-	
-	});
-}); // removeRestaurant
-
-// done
-app.get('/editRestaurant', function(req, res) {
-	mongoose.connect(mongodbURL);
-	var db = mongoose.connection;
-	db.on('error', console.error.bind(console, "Connection ERROR: "));
-	db.once('open', function (callback) {
-		var Restaurant = mongoose.model('restaurant', RestaurantSchema);
-		var target = {_id: ""};
-		target._id = req.query.id;
-		Restaurant.findOne(target, function(err,results) {
-			if (err) {
-				console.log("Error: " + err.message);
-				res.write(err.message);
+				});	
 			}
 			else {
 				db.close();
-				console.log(results);
-				res.render('editRestaurant',{restaurant: results});
+				console.log("Error: Input data length is different");
+				res.status(200).send('Input data length is different');
 			}
-			res.end();
-		});
+			
+		}
+		else {
+			db.close();
+			console.log("Error: Missing input data");
+			res.status(200).send('Missing input data');
+		}
 	});
-}); // editRestaurant
+}); // createRestaurant
 
-//not search _id for update still using the restaurant_id need fix it 
-//cannot show the page to user operation is successd
-app.get('/updateRestaurant', function(req, res) {
+app.delete('/delete/:id', function(req,res) {
+	mongoose.connect(mongodbURL);
+	var db = mongoose.connection;
+	db.on('error', console.error.bind(console, "Connection ERROR: "));
+	db.once('open', function (callback) {
+		
+		console.log('Incoming request: DELETE');
+		
+		var Restaurant= mongoose.model('restaurant', RestaurantSchema);
+		Restaurant.find({restaurant_id: req.params.id}).remove(function(err) {
+			if (err) {
+				console.log("Error: " + err.message);
+				db.close();
+				res.status(500).json(err);
+			}
+			else {
+				console.log("Restaurant Deleted");
+				console.log("Restaurant ID : " + req.params.id);	
+				db.close();
+				res.status(200).json({Message: 'Delete Done', id: req.params.id});
+			}
+		});		
+	});		
+}); // removeRestaurant
+
+app.put('/update/:id/:attrib/:attrib_value', function(req, res) {
 	mongoose.connect(mongodbURL);
 	var db = mongoose.connection;
 	db.on('error', console.error.bind(console, 'Connection ERROR: '));
 	db.once('open', function(callback) {
+		
+		console.log('Incoming request: PUT');
+		console.log('Request body: ', req.body);
+		
 		var Restaurant = mongoose.model("restaurant", RestaurantSchema);
-		var target = {};
-		target.restaurant_id = req.query.id;
-		console.log(target);
 		Restaurant.findOne(target, function(err, result) {
 			if(err)
 				console.log("Find Document Update Error: " + err.message);
@@ -202,33 +132,28 @@ app.get('/updateRestaurant', function(req, res) {
 				result.save(function(err) {
 					if (err) {
 						console.log("Error: " + err.message);
-						res.writeHead(404, {"Content-Type": "text/html"});
-						res.write('<html><head><title>Update Fail</title></head><body><h1>Update Fail</h1>');
-						res.write('<br><a href="/">Go Home</a></body></html>');
-						res.write(err.message);
-						res.end();
+						res.status(500).json(err);
 					}
 					else {
 						console.log('Updated: ', result._id);
-						res.writeHead(200, {"Content-Type": "text/html"});
-						res.write('<html><head><title>Update Success</title></head><body><h1>Update Succeed</h1>');
+						res.status(200).json({Message: 'Update Done', id: req.body.id});
 						
 					}
 				});
 			}
 		db.close();
-		res.write('<br><a href="/">Go Home</a></body></html>');
-		res.end();
 		});
 	});
 }); // updateRestaurant
 
-//if more than one Address object use for searching, the previous one will lost after save another matched Address object 
-app.get('/displayRestaurant', function(req, res) {
+app.get('/display', function(req, res) {
 	mongoose.connect(mongodbURL);
 	var db = mongoose.connection;
 	db.on('error', console.error.bind(console, "Connection ERROR: " ));
 	db.once('open', function(callback) {
+		
+		console.log('Incoming request: GET');
+		
 		var Restaurant = mongoose.model('restaurant', RestaurantSchema);
 		var criteria = {};
 
@@ -267,13 +192,14 @@ app.get('/displayRestaurant', function(req, res) {
 		Restaurant.find(criteria, function(err, results) {
 			if(err) {
 				console.log("ERROR: " + err.message);
-				res.write(err.message);
+				res.end('Connection closed',400);
 			}
 			else {
 				console.log("FOUND RESULT:" + results.length);
 				if(results) {			
-					res.render('displayResult', {restaurant: results});
-					res.end();
+					res.writeHead(200,{"Content-Type": "applcation/json"});
+					res.write(JSON.stringify(results));
+					res.end('Connection closed',200);
 				}				
 			}
 			db.close();

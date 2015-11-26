@@ -3,54 +3,21 @@
 		<title>Restaurant Registration</title>
 	</head>
 	<body>
-		<H1>Restaurant Registration</H1>
-		<form action="createRestaurant" method="post">
-			<H2>Name of Restaurant</H2>
+		<form action="create" method="post">
+
 			<input type='text' name='name'>
-			<H2>Address</H2>
-				<table>
-					<tr>
-						<td>Building:</td> 
-						<td><input type='text' name='building'></td>
-					</tr>
-					<tr>
-						<td>Street:</td>
-						<td><input type='text' name='street'></td>
-					</tr>
-					<tr>
-						<td>Zipcode:</td>
-						<td><input type='text' name='zipcode'></td>
-					</tr>
-			</table>
-			<H2>Corrdinates</H2>
-			<table>
-					<tr>
-						<td>Longitude:</td> 
-						<td><input type='text' name='lon'></td>
-					</tr>
-					<tr>
-						<td>Latitude:</td>
-						<td><input type='text' name='lat'></td>
-					</tr>
-			</table>
-			<H2>Other Info</H2>
-			<table>
-					<tr>
-						<td>Borough:</td> 
-						<td><input type='text' name='borough'></td>
-					</tr>
-					<tr>
-						<td>Cuisine:</td>
-						<td><input type='text' name='cuisine'></td>
-					</tr>
-					<tr>
-						<td>Restaurant Id:</td>
-						<td><input type='text' name='id'></td>
-					</tr>
-			</table>
-			<br>
+			<input type='text' name='building'>
+			<input type='text' name='street'>
+			<input type='text' name='zipcode'>
+			<input type='number' name='lon'>
+			<input type='number' name='lat'>
+			<input type='text' name='borough'>
+			<input type='text' name='cuisine'>
+			<input type='text' name='restaurant_id'>
+			<input type='text' name='date'>
+			<input type='text' name='grade'>
+			<input type='number' name='score'>
 			<input type='submit' value='Create'><br><br>
-			<b><a href="/">Go home</a></b>
 		</form>
 	</body>
 </html>
