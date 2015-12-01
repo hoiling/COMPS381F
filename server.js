@@ -33,7 +33,7 @@ app.post('/create', function(req, res) {
 		input.address.coord[1] = parseFloat(req.body.lat);
 		input.borough = req.body.borough;
 		input.cuisine = req.body.cuisine;
-		input.restaurant_id = req.body.restaurant_id;
+		input.restaurant_id = req.body.id;
 		input.name = req.body.name;				
 		
 		if(req.body.date && req.body.grade && req.body.score) {
@@ -59,27 +59,27 @@ app.post('/create', function(req, res) {
 					}
 					else {
 						db.close();	
-						console.log("Restaurant is created");
-						res.status(200).json({Message: 'Insert Done', id: input.restaurant_id});						
+						console.log("\n Restaurant is created");
+						res.status(200).send("\nInsert restaurant done, id: "+ input.restaurant_id + "\n");						
 					}
 				});	
 			}
 			else {
 				db.close();
 				console.log("Error: Input data length is different");
-				res.status(200).send('Input data length is different');
+				res.status(200).send('Input data length is different \n');
 			}
 			
 		}
 		else {
 			db.close();
 			console.log("Error: Missing input data");
-			res.status(200).send('Missing input data');
+			res.status(200).send('Missing input data \n');
 		}
 	});
 }); // createRestaurant
 
-app.delete('/delete/:id', function(req,res) {
+app.delete('/delete/:id', function(req, res) {
 	mongoose.connect(mongodbURL);
 	var db = mongoose.connection;
 	db.on('error', console.error.bind(console, "Connection ERROR: "));
@@ -98,58 +98,197 @@ app.delete('/delete/:id', function(req,res) {
 				console.log("Restaurant Deleted");
 				console.log("Restaurant ID : " + req.params.id);	
 				db.close();
-				res.status(200).json({Message: 'Delete Done', id: req.params.id});
+				res.status(200).send("Delete Done, id: " + req.params.id + "\n");
 			}
 		});		
 	});		
-}); // removeRestaurant
+}); // delete
 
-app.put('/update/:id/:attrib/:attrib_value', function(req, res) {
+app.delete('/delete/grades/:id', function(req, res) {
 	mongoose.connect(mongodbURL);
 	var db = mongoose.connection;
 	db.on('error', console.error.bind(console, 'Connection ERROR: '));
-	db.once('open', function(callback) {
-		
-		console.log('Incoming request: PUT');
+	db.once('open', function(callback) {		
+		console.log('Incoming request: DELETE');
 		console.log('Request body: ', req.body);
-		
 		var Restaurant = mongoose.model("restaurant", RestaurantSchema);
-		Restaurant.findOne(target, function(err, result) {
-			if(err)
-				console.log("Find Document Update Error: " + err.message);
-			else {	
-				result.address.building = req.query.building;
-				result.address.street = req.query.street;
-				result.address.zipcode = req.query.zipcode;
-				result.address.coord = [req.query.lon, req.query.lat];
-				result.name = req.query.name;
-				result.cuisine = req.query.cuisine;
-				result.borough = req.query.borough;
-				result.restaurant_id = req.query.id;
-				
-				console.log(result);	
-				// able to update but can't show the word in webpage and cmd
-				result.save(function(err) {
-					if (err) {
-						console.log("Error: " + err.message);
-						res.status(500).json(err);
-					}
-					else {
-						console.log('Updated: ', result._id);
-						res.status(200).json({Message: 'Update Done', id: req.body.id});
-						
-					}
-				});
+		var id = req.params.id;
+		var criteria = "";
+		var date = "";
+		var grade = "";
+		var score = "";
+		if(req.body.date) {
+			date += '"date": "' + req.body.date + '"';
+			criteria += date;
+		}
+		if(req.body.grade) {
+			grade = '"grade": "' + req.body.grade + '"';
+			if(criteria)
+				criteria += ', ' + grade;
+			else
+				criteria += grade;
+		}
+		if(req.body.score) {
+			score = '"score": ' + req.body.score;
+			if(criteria)
+				criteria += ', ' + score;
+			else
+				criteria += score;
+		}
+		console.log(criteria);
+		var obj = JSON.parse('{"grades": ' + '{' + criteria + '}}');
+		console.log(obj);
+		
+		Restaurant.update({restaurant_id: id}, {$pull: obj}, function(err, result) {
+			if (err) {
+				console.log("Error: " + err.message);
+				res.status(500).json(err);
 			}
-		db.close();
+			else {
+				res.status(200).send('Update Id: ' + id + " is successed. \n");
+			}
+			db.close();
 		});
 	});
-}); // updateRestaurant
+}); // delete/grades
+
+app.put('/update/:id', function(req, res) {
+	mongoose.connect(mongodbURL);
+	var db = mongoose.connection;
+	db.on('error', console.error.bind(console, 'Connection ERROR: '));
+	db.once('open', function(callback) {		
+		console.log('Incoming request: PUT');
+		console.log('Request body: ', req.body);
+		var Restaurant = mongoose.model("restaurant", RestaurantSchema);
+		var id = req.params.id;
+		var criteria = "";
+		var building = "";
+		var street = "";
+		var zipcode = "";
+		var name = "";
+		var borough = "";
+		var cuisine = "";
+		
+		if(req.body.name) {
+			name = '"name": "' + req.body.name +'"';
+			criteria += name;
+		}
+		if(req.body.borough) {
+			borough = '"borough": "' + req.body.borough +'"';
+			if(criteria)
+				criteria += ", " + borough;
+			else
+				criteria += borough;
+		}
+		if(req.body.cuisine) {
+			cuisine = '"cuisine": "' + req.body.cuisine +'"';
+			if(criteria)
+				criteria += ", " + cuisine;
+			else
+				criteria += cuisine;
+		}
+		if(req.body.building) {
+			building += '"address.building": "' + req.body.building +'"';
+			if(criteria)
+				criteria += ", " + building;
+			else
+				criteria += building;
+		}
+		if(req.body.street) {
+			street += '"address.street": "' + req.body.street +'"';
+			if(criteria)
+				criteria += ", " + street;
+			else
+				criteria += street;
+		}
+		if(req.body.zipcode) {
+			zipcode += '"address.zipcode": "' + req.body.zipcode +'"';
+			if(criteria)
+				criteria += ", " + zipcode;
+			else
+				criteria += zipcode;
+		}
+		var obj = JSON.parse('{' + criteria +'}');
+		console.log(obj);		
+
+		Restaurant.update({restaurant_id: id}, {$set: obj}, function(err, result) {
+			if (err) {
+				console.log("Error: " + err.message);
+				res.status(500).json(err);
+			}
+			else {
+				res.status(200).send('Update Id: ' + id + " is successed. \n");
+			}
+			db.close();
+		});
+	});	
+}); // update (expected coord and grades)
+
+app.put('/update/coord/:id', function(req, res) {	
+	mongoose.connect(mongodbURL);
+	var db = mongoose.connection;
+	db.on('error', console.error.bind(console, "Connection ERROR: "));
+	db.once('open', function(callbacl) {
+		console.log('Incoming request: PUT');
+		console.log('Request body: ', req.body);
+		var Restaurant = mongoose.model("restaurant", RestaurantSchema);
+		var id = req.params.id;
+		
+		if(req.body.lon && req.body.lat) {
+			var coord = JSON.parse('{"address.coord": [' + req.body.lon +', ' + req.body.lat + ']}');	
+			Restaurant.update({restaurant_id: id}, {$set: coord}, function(err, result) {
+				if (err) {
+					console.log("Error: " + err.message);
+					res.status(500).json(err);
+				}
+				else {
+					res.status(200).send('Update Id: ' + id + " is successed. \n");
+				}
+			db.close();
+			});
+		}
+		else {
+			console.log("One of coordination is missing \n");
+			res.status(400).send("One of coordination is missing \n");
+			db.close();
+		}
+	});			
+}); // update/coord
+
+app.put('/update/grades/:id', function(req, res) {
+	mongoose.connect(mongodbURL);
+	var db = mongoose.connection;
+	db.on('error', console.error.bind(console, "Connection ERROR: "));
+	db.once('open', function(callback) {
+		console.log('Incoming request: PUT');
+		console.log('Request body: ', req.body);
+		var Restaurant = mongoose.model("restaurant", RestaurantSchema);
+		var id = req.params.id;
+		if(req.body.date && req.body.grade && req.body.score) {
+			var criteria = JSON.parse('{"grades": {"date": "' + req.body.date +'", "grade": "' + req.body.grade + '", "score": ' + req.body.score + '}}');
+			Restaurant.update({restaurant_id: id}, {$push: criteria}, function(err, result) {
+				if (err) {
+					console.log("Error: " + err.message);
+					res.status(500).json(err);
+				}
+				else {
+					res.status(200).send('Update Id: ' + id + " grades update is successed. \n");
+				}
+			db.close();
+			});
+		}
+		else {
+			console.log("One of grades information is missing \n");
+			res.status(400).send("One of grades information is missing \n");
+			db.close();
+		}	
+	});	
+}); // update/grades
 
 app.get('/display', function(req, res) {
 	mongoose.connect(mongodbURL);
 	var db = mongoose.connection;
-	db.on('error', console.error.bind(console, "Connection ERROR: " ));
+	db.on('error', console.error.bind(console, "Connection ERROR: "));
 	db.once('open', function(callback) {
 		
 		console.log('Incoming request: GET');
@@ -199,7 +338,7 @@ app.get('/display', function(req, res) {
 				if(results) {			
 					res.writeHead(200,{"Content-Type": "applcation/json"});
 					res.write(JSON.stringify(results));
-					res.end('Connection closed',200);
+					res.status(200);
 				}				
 			}
 			db.close();
