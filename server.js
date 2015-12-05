@@ -68,7 +68,8 @@ app.post('/create', function(req, res) {
 				db.close();
 				console.log("Error: Input data length is different");
 				res.status(200).send('Input data length is different \n');
-			}			
+			}
+			
 		}
 		else {
 			db.close();
@@ -207,47 +208,52 @@ app.put('/update/:id', function(req, res) {
 			else
 				criteria += zipcode;
 		}
-		
-		if(req.body.lon || req.body.lat) {
-			if(req.body.lon && req.body.lat) {
-				var coord = '"address.coord": [' + req.body.lon +', ' + req.body.lat + ']';
-				var obj = JSON.parse('{' + criteria + ', ' + coord + '}');
-				console.log(obj);
-				Restaurant.update({restaurant_id: id}, {$set: obj}, function(err, result) {
-					if (err) {
-						console.log("Error: " + err.message);
-						res.status(500).json(err);
-					}
-					else {
-						console.log("Update is successed \n");
-						res.status(200).send('Update Id: ' + id + " is successed. \n");
-					}
-				db.close();
-				});
-			}
-			else {
-				console.log("One of coordination is missing \n");
-				res.status(400).send("One of coordination is missing \n");
-				db.close();
-			}
-		}
-		else {
-			var obj = JSON.parse('{' + criteria +'}');
-			console.log(obj);
-			Restaurant.update({restaurant_id: id}, {$set: obj}, function(err, result) {
+		var obj = JSON.parse('{' + criteria +'}');
+		console.log(obj);		
+
+		Restaurant.update({restaurant_id: id}, {$set: obj}, function(err, result) {
 			if (err) {
 				console.log("Error: " + err.message);
 				res.status(500).json(err);
 			}
 			else {
-				console.log("Update is successed \n");
 				res.status(200).send('Update Id: ' + id + " is successed. \n");
 			}
 			db.close();
-			});
-		}		
+		});
 	});	
 }); // update (expected coord and grades)
+
+app.put('/update/coord/:id', function(req, res) {	
+	mongoose.connect(mongodbURL);
+	var db = mongoose.connection;
+	db.on('error', console.error.bind(console, "Connection ERROR: "));
+	db.once('open', function(callbacl) {
+		console.log('Incoming request: PUT');
+		console.log('Request body: ', req.body);
+		var Restaurant = mongoose.model("restaurant", RestaurantSchema);
+		var id = req.params.id;
+		
+		if(req.body.lon && req.body.lat) {
+			var coord = JSON.parse('{"address.coord": [' + req.body.lon +', ' + req.body.lat + ']}');	
+			Restaurant.update({restaurant_id: id}, {$set: coord}, function(err, result) {
+				if (err) {
+					console.log("Error: " + err.message);
+					res.status(500).json(err);
+				}
+				else {
+					res.status(200).send('Update Id: ' + id + " is successed. \n");
+				}
+			db.close();
+			});
+		}
+		else {
+			console.log("One of coordination is missing \n");
+			res.status(400).send("One of coordination is missing \n");
+			db.close();
+		}
+	});			
+}); // update/coord
 
 app.put('/update/grades/:id', function(req, res) {
 	mongoose.connect(mongodbURL);
@@ -258,68 +264,24 @@ app.put('/update/grades/:id', function(req, res) {
 		console.log('Request body: ', req.body);
 		var Restaurant = mongoose.model("restaurant", RestaurantSchema);
 		var id = req.params.id;
-		var search = "";
-		var criteria = "";
-		if(req.body.orignalDate || req.body.orignalGrade || req.body.orignalScore) {
-			if(req.body.orignalDate)
-				search += '"grades.date": "' + req.body.orignalDate + '"';
-			if(req.body.orignalGrade) {
-				if(search)
-					search += ', "grades.grade": "' + req.body.orignalGrade + '"';
-				else
-					search += '"grades.grade": "' + req.body.orignalGrade + '"';
-			}
-			if(req.body.orignalScore) {
-				if(search)
-					search += ', "grades.score": ' + req.body.orignalScore;
-				else
-					search += '"grades.score": ' + req.body.orignalScore;
-			}
-			
-			var obj = JSON.parse('{"restaurant_id": "' + id + '", ' + search + '}');
-			console.log(obj);
-			
-			if(req.body.date && req.body.grade && req.body.score) {
-				criteria = JSON.parse('{"grades.$": {"date": "' + req.body.date +'", "grade": "' + req.body.grade + '", "score": ' + req.body.score + '}}');
-				console.log(criteria);
-				
-				Restaurant.update(obj, {$set: criteria}, function(err, result) {
-					if (err) {
-						console.log("Error: " + err.message);
-						res.status(500).json(err);
-					}
-					else {
-						res.status(200).send('Update Id: ' + id + " grades update is successed. \n");
-					}
-				db.close();
-				});
-			}
-			else {
-				console.log("One of grades information is missing \n");
-				res.status(400).send("One of grades information is missing \n");
-				db.close();
-			}	
+		if(req.body.date && req.body.grade && req.body.score) {
+			var criteria = JSON.parse('{"grades": {"date": "' + req.body.date +'", "grade": "' + req.body.grade + '", "score": ' + req.body.score + '}}');
+			Restaurant.update({restaurant_id: id}, {$push: criteria}, function(err, result) {
+				if (err) {
+					console.log("Error: " + err.message);
+					res.status(500).json(err);
+				}
+				else {
+					res.status(200).send('Update Id: ' + id + " grades update is successed. \n");
+				}
+			db.close();
+			});
 		}
 		else {
-			if(req.body.date && req.body.grade && req.body.score) {
-				criteria = JSON.parse('{"grades": {"date": "' + req.body.date +'", "grade": "' + req.body.grade + '", "score": ' + req.body.score + '}}');
-				Restaurant.update({restaurant_id: id}, {$push: criteria}, function(err, result) {
-					if (err) {
-						console.log("Error: " + err.message);
-						res.status(500).json(err);
-					}
-					else {
-						res.status(200).send('Update Id: ' + id + " grades update is successed. \n");
-					}
-				db.close();
-				});
-			}
-			else {
-				console.log("One of grades information is missing \n");
-				res.status(400).send("One of grades information is missing \n");
-				db.close();
-			}	
-		}		
+			console.log("One of grades information is missing \n");
+			res.status(400).send("One of grades information is missing \n");
+			db.close();
+		}	
 	});	
 }); // update/grades
 
