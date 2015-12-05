@@ -384,27 +384,23 @@ app.get('/display', function(req, res) {
 	});	
 }); // displayRestaurant
 
-app.post('http://comps381f.azurewebsites.net/create', function(req, res) {
-	res.redirect('/create');
+app.delete('/delete',function(req,res) {
+	res.redirect('/delete' + req.query.id);
 });
 
-app.delete('http://comps381f.azurewebsites.net/delete',function(req,res) {
-	res.redirect('/display' + req.query.id);
+app.delete('/delete/grades',function(req,res) {
+	res.redirect('/delete/grades/' + req.query.id);
 });
 
-app.delete('http://comps381f.azurewebsites.net/delete/grades',function(req,res) {
-	res.redirect('/display/grades/' + req.query.id);
-});
-
-app.put('http://comps381f.azurewebsites.net/update',function(req,res) {
+app.put('/update',function(req,res) {
 	res.redirect('/update' + req.query.id);
 });
 
-app.put('http://comps381f.azurewebsites.net/update/grades',function(req,res) {
+app.put('/grades',function(req,res) {
 	res.redirect('/update/grades' + req.query.id);
 });
 
-app.get('http://comps381f.azurewebsites.net/display',function(req,res) {
+app.get('/display',function(req,res) {
 	res.redirect('/display');
 });
 
