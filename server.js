@@ -384,4 +384,28 @@ app.get('/display', function(req, res) {
 	});	
 }); // displayRestaurant
 
+app.post('http://comps381f.azurewebsites.net/create', function(req, res) {
+	res.redirect('/create');
+});
+
+app.delete('http://comps381f.azurewebsites.net/delete',function(req,res) {
+	res.redirect('/display' + req.query.id);
+});
+
+app.delete('http://comps381f.azurewebsites.net/delete/grades',function(req,res) {
+	res.redirect('/display/grades/' + req.query.id);
+});
+
+app.put('http://comps381f.azurewebsites.net/update',function(req,res) {
+	res.redirect('/update' + req.query.id);
+});
+
+app.put('http://comps381f.azurewebsites.net/update/grades',function(req,res) {
+	res.redirect('/update/grades' + req.query.id);
+});
+
+app.get('http://comps381f.azurewebsites.net/display',function(req,res) {
+	res.redirect('/display');
+});
+
 app.listen(process.env.PORT||8099);
