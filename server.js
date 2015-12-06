@@ -54,8 +54,9 @@ app.post('/create', function(req, res) {
 				newRestaurant.save(function(err) {
 					console.log(input);
 					if(err) {
-						console.log("Error: " + err.message);
-						res.status(500).json(err);
+						console.log("Error: " + err.message); 
+						res.status(500).json(err);			
+						db.close();	
 					}
 					else {
 						db.close();	
@@ -66,7 +67,7 @@ app.post('/create', function(req, res) {
 			}
 			else {
 				db.close();
-				console.log("Error: Input data length is different");
+				console.log("Error: Input Grades data length is different");
 				res.status(200).send('Input data length is different \n');
 			}			
 		}
@@ -90,14 +91,14 @@ app.delete('/delete/:id', function(req, res) {
 		Restaurant.find({restaurant_id: req.params.id}).remove(function(err) {
 			if (err) {
 				console.log("Error: " + err.message);
-				db.close();
 				res.status(500).json(err);
+				db.close();
 			}
 			else {
 				console.log("Restaurant Deleted");
 				console.log("Restaurant ID : " + req.params.id);	
-				db.close();
 				res.status(200).send("Delete Done, id: " + req.params.id + "\n");
+				db.close();				
 			}
 		});		
 	});		
@@ -142,11 +143,15 @@ app.delete('/delete/grades/:id', function(req, res) {
 			if (err) {
 				console.log("Error: " + err.message);
 				res.status(500).json(err);
+				db.close();
 			}
 			else {
-				res.status(200).send('Update Id: ' + id + " is successed. \n");
+				console.log("Restaurant Grades Deleted");
+				console.log("Restaurant ID : " + req.params.id);	
+				res.status(200).send("Delete Restaurant Done, id: " + req.params.id + "\n");
+				db.close();		
 			}
-			db.close();
+			
 		});
 	});
 }); // delete/grades
@@ -219,7 +224,8 @@ app.put('/update/:id', function(req, res) {
 						res.status(500).json(err);
 					}
 					else {
-						console.log("Update is successed \n");
+						console.log("Restaurant ID : " + req.params.id);
+						console.log("Update is successed \n");						
 						res.status(200).send('Update Id: ' + id + " is successed. \n");
 					}
 				db.close();
@@ -240,7 +246,8 @@ app.put('/update/:id', function(req, res) {
 				res.status(500).json(err);
 			}
 			else {
-				console.log("Update is successed \n");
+				console.log("Restaurant ID : " + req.params.id);
+				console.log("Update is successed \n");	
 				res.status(200).send('Update Id: ' + id + " is successed. \n");
 			}
 			db.close();
@@ -289,6 +296,8 @@ app.put('/update/grades/:id', function(req, res) {
 						res.status(500).json(err);
 					}
 					else {
+						console.log("Restaurant ID : " + req.params.id);
+						console.log("Update grades is successed. \n");
 						res.status(200).send('Update Id: ' + id + " grades update is successed. \n");
 					}
 				db.close();
@@ -309,6 +318,8 @@ app.put('/update/grades/:id', function(req, res) {
 						res.status(500).json(err);
 					}
 					else {
+						console.log("Restaurant ID : " + req.params.id);
+						console.log("Update grades is successed. \n");
 						res.status(200).send('Update Id: ' + id + " grades update is successed. \n");
 					}
 				db.close();
@@ -323,65 +334,71 @@ app.put('/update/grades/:id', function(req, res) {
 	});	
 }); // update/grades
 
+
 app.get('/display', function(req, res) {
 	mongoose.connect(mongodbURL);
 	var db = mongoose.connection;
 	db.on('error', console.error.bind(console, "Connection ERROR: "));
 	db.once('open', function(callback) {
 		
-		console.log('Incoming request: GET');
-		
+		console.log('Incoming request: GET');		
 		var Restaurant = mongoose.model('restaurant', RestaurantSchema);
-		var criteria = {};
+		
+		Restaurant.find({}, function(err,result) { //nothing to find
+				if (err) {
+					console.log("Error: " + err.message);
+					db.close();
+					res.status(500).json(err);
+				}
+				else {
+					if(result.length == 0){
+						console.log("Empty!!!!");
+						res.status(200).send("No matching document, restaurant_id:" + req.params.id + "\n");
+						db.close();
+					}
+					else{
+						console.log(result);
+						console.log("Read Done \n");
+						res.status(200).send(result);
+						db.close();
+				     }
+				}
+			});			
+	});	
+}); // display
 
-		console.log(req.query);
+app.get('/display/restaurant_id/:id', function(req, res) {
+	mongoose.connect(mongodbURL);
+	var db = mongoose.connection;
+	db.on('error', console.error.bind(console, "Connection ERROR: "));
+	db.once('open', function(callback) {
 		
-		//Address
-		if(req.query.building)
-			criteria = {"address.building": req.query.building};
-		if(req.query.street)
-			criteria = {"address.street": req.query.street};
-		if(req.query.zipcode)
-			criteria = {"address.zipcode": req.query.zipcode};
-		if(req.query.lon)
-			criteria = {"address.coord": req.query.lon};
-		if(req.query.lat)
-			criteria = {"address.coord": req.query.lat};
-		if(req.query.lon && req.query.lat)
-			criteria = {"address.coord": [req.query.lon, req.query.lat]};		
-		
-		// not problem
-		//Borough
-		if(req.query.borough)
-			criteria.borough = req.query.borough;
-		//Cuisine
-		if(req.query.cuisine)
-			criteria.cuisine = req.query.cuisine;
-		//Restaurant_id
-		if(req.query.restaurant_id)
-			criteria.restaurant_id = req.query.restaurant_id;
-		//Name
-		if(req.query.name)
-			criteria.name = req.query.name;		
-		
-		console.log(criteria);
-	
-		Restaurant.find(criteria, function(err, results) {
-			if(err) {
-				console.log("ERROR: " + err.message);
-				res.end('Connection closed',400);
+		console.log('Incoming request: GET');		
+		var Restaurant = mongoose.model('restaurant', RestaurantSchema);
+		var id = req.params.id;
+
+		Restaurant.find({restaurant_id:req.params.id}, function(err,result) {
+			if (err) {
+				console.log("Error: " + err.message);
+				db.close();
+				res.status(500).json(err);
+				db.close();
 			}
 			else {
-				console.log("FOUND RESULT:" + results.length);
-				if(results) {			
-					res.writeHead(200,{"Content-Type": "applcation/json"});
-					res.write(JSON.stringify(results));
-					res.status(200);
-				}				
+				if(result.length == 0){
+					console.log("Empty!!!!");
+					res.status(200).send("No matching document, restaurant_id:" + req.params.id + "\n");
+					db.close();	
+			    }
+				else{
+					console.log(result);
+					console.log("Restaurant ID : " +req.params.id);	
+					res.status(200).send(result);
+					db.close();
+				}
 			}
-			db.close();
 		});	
 	});	
-}); // displayRestaurant
+}); // display/id
 
 app.listen(process.env.PORT||8099);
