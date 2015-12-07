@@ -79,6 +79,36 @@ app.post('/create', function(req, res) {
 	});
 }); // createRestaurant
 
+app.post('/create/id/', function(req, res) {	
+	mongoose.connect(mongodbURL);
+	var db = mongoose.connection;
+	db.on('error', console.error.bind(console, "Connection ERROR: " ));
+	db.once('open', function(callback) {
+		
+		console.log('Incoming request: POST');
+		console.log('Request body: ', req.body);
+		
+		var Restaurant = mongoose.model('restaurant', RestaurantSchema);
+		var input = {restaurant_id: ""};
+		
+		input.restaurant_id = req.body.id;			
+		var newRestaurant = new Restaurant(input);
+			newRestaurant.save(function(err) {
+			console.log(input);
+			if(err) {
+				console.log("Error: " + err.message); 
+				res.status(500).json(err);			
+				db.close();	
+			}
+			else {
+				db.close();	
+				console.log("\n Restaurant is created");
+				res.status(200).send("\nInsert restaurant done, id: "+ input.restaurant_id + "\n");						
+			}
+			});	
+	});
+}); // create/id
+
 app.delete('/delete/:id', function(req, res) {
 	mongoose.connect(mongodbURL);
 	var db = mongoose.connection;
@@ -145,11 +175,16 @@ app.delete('/delete/grades/:id', function(req, res) {
 				res.status(500).json(err);
 				db.close();
 			}
-			else {
+			else {  
+				console.log(result)
+				if(result.nModified == 0){
+                                 res.status(200).send("Error message: remove opreation failed\n");
+				}
+				else{
 				console.log("Restaurant Grades Deleted");
 				console.log("Restaurant ID : " + req.params.id);	
 				res.status(200).send("Delete Restaurant Done, id: " + req.params.id + "\n");
-				db.close();		
+				db.close();	}	
 			}
 			
 		});
@@ -401,4 +436,4 @@ app.get('/display/restaurant_id/:id', function(req, res) {
 	});	
 }); // display/id
 
-app.listen(process.env.PORT||8099);
+app.listen(process.env.PORT||8088);
