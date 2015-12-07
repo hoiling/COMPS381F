@@ -79,7 +79,7 @@ app.post('/create', function(req, res) {
 	});
 }); // createRestaurant
 
-app.post('/create/id/', function(req, res) {	
+app.post('/create/id', function(req, res) {	
 	mongoose.connect(mongodbURL);
 	var db = mongoose.connection;
 	db.on('error', console.error.bind(console, "Connection ERROR: " ));
