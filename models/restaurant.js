@@ -2,16 +2,16 @@ var mongoose = require('mongoose');
 
 var restaurantSchema = mongoose.Schema({
     address : {
-        street: {type: String, required: true},
-        zipcode: {type: String, required: true},
-        building: {type: String, required: true},
-        coord: {type: [Number,Number], require: true}
+        street: {type: String},
+        zipcode: {type: String},
+        building: {type: String},
+        coord: {type: [Number,Number]}
         },
-    borough: {type: String, required: true},
-    cuisine: {type: String, required: true},
-    grades: [{date: {type: String, required: true}, grade: {type: String, required: true}, score: {type: Number, require: true}}],
-    name: {type: String, required: true},
-    restaurant_id: {type: String, required: true},
+    borough: {type: String},
+    cuisine: {type: String},
+    grades: [{date: {type: String}, grade: {type: String}, score: {type: Number}}],
+    name: {type: String},
+    restaurant_id: {type: String},
 });
 
 module.exports = restaurantSchema;
